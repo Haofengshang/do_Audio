@@ -7,6 +7,6 @@ public class DoApplication extends Application {
 	@Override
 	public void onCreate() {
 		super.onCreate();
-		doext.app.do_AudioPlay_App.getInstance().onCreate(this);
+		doext.app.do_Audio_App.getInstance().onCreate(this);
 	}	
 }

@@ -6,17 +6,17 @@ import core.interfaces.DoIAppDelegate;
  * APP启动的时候会执行onCreate方法；
  *
  */
-public class do_AudioPlay_App implements DoIAppDelegate {
+public class do_Audio_App implements DoIAppDelegate {
 
-	private static do_AudioPlay_App instance;
+	private static do_Audio_App instance;
 	
-	private do_AudioPlay_App(){
+	private do_Audio_App(){
 		
 	}
 	
-	public static do_AudioPlay_App getInstance() {
+	public static do_Audio_App getInstance() {
 		if(instance == null){
-			instance = new do_AudioPlay_App();
+			instance = new do_Audio_App();
 		}
 		return instance;
 	}
@@ -27,6 +27,6 @@ public class do_AudioPlay_App implements DoIAppDelegate {
 	}
 	
 	public String getModuleTypeID() {
-		return "do_AudioPlay";
+		return "do_Audio";
 	}
 }
