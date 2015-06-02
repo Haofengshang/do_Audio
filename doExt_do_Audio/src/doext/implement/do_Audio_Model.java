@@ -28,7 +28,7 @@ import doext.define.do_IRecord;
  * 参数解释：@_messageName字符串事件名称，@jsonResult传递事件参数对象；
  * 获取DoInvokeResult对象方式new DoInvokeResult(this.getUniqueKey());
  */
-public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMethod,do_IRecord.OnRecordTimeChangeListener{
+public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMethod {
 	
 	private MediaPlayer mediaPlayer;
 	private do_IRecord record;
@@ -136,7 +136,7 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 		isPlaying = true;
 		mediaPlayer.reset();//把各项参数恢复到初始状态
 		mediaPlayer.setDataSource(path);
-        mediaPlayer.prepare();//进行缓冲  
+        mediaPlayer.prepareAsync();//进行缓冲  
         mediaPlayer.setOnPreparedListener(new PreparedListener(position));//注册一个监听器
 	}
 	
@@ -200,7 +200,7 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	 */
 	@Override
 	public void startRecord(JSONObject _dictParas, DoIScriptEngine _scriptEngine,
-			DoInvokeResult _invokeResult) throws Exception {
+			final DoInvokeResult _invokeResult) throws Exception {
 		String path = DoJsonHelper.getString(_dictParas,"path","");
 		String type = DoJsonHelper.getString(_dictParas,"type","mp3");//录音输出格式mp3、amr、aac
 		String quality = DoJsonHelper.getString(_dictParas,"quality","normal");//录音输出质量high、normal、low
@@ -209,9 +209,31 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 		String fileFullPath = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), outPath) ;
 		DoIOHelper.createFile(fileFullPath);
 		record = RecorderFactory.getRecorder(type);
-		if(null != record){
+		if(null != record) {
 			record.startRecord(limit, quality, fileFullPath);
-			record.setOnRecordTimeChangeListener(this);
+			record.setOnRecordListener(new do_IRecord.OnRecordListener() {
+				@Override
+				public void onStart() {
+					_invokeResult.setResultBoolean(true);
+				}
+				
+				@Override
+				public void onError() {
+					_invokeResult.setResultBoolean(false);
+				}
+				
+				@Override
+				public void onRecordTimeChange(long totalTimeMillis) {
+					DoInvokeResult jsonResult = new DoInvokeResult(getUniqueKey());
+					jsonResult.setResultText(totalTimeMillis + "");
+					getEventCenter().fireEvent("recordProgress", jsonResult);
+				}
+				
+				@Override
+				public void onFinished() {
+					getEventCenter().fireEvent("recordFinished",  new DoInvokeResult(getUniqueKey()));
+				}
+			});
 		}
 	}
 	
@@ -264,13 +286,6 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
             onPlayPositionChange();
         }  
     }
-
-	@Override
-	public void onRecordTimeChange(long totalTimeMillis) {
-		DoInvokeResult jsonResult = new DoInvokeResult(getUniqueKey());
-		jsonResult.setResultText(totalTimeMillis + "");
-		this.getEventCenter().fireEvent("recordProgress", jsonResult);
-	}  
 	
 	private void onPlayPositionChange(){
 		TimerTask task = new TimerTask(){

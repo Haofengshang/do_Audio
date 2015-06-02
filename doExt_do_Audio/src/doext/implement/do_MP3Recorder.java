@@ -29,6 +29,7 @@ public class do_MP3Recorder extends RecorderBase {
 				try {
 					startTimer(new Timer());
 					mAudioRecord.startRecording(); // 开启录音获取音频数据
+					onRecordListener.onStart();
 					// 开始录音
 					long startTimeMillis = System.currentTimeMillis();
 					int readSize = 0;
@@ -44,11 +45,13 @@ public class do_MP3Recorder extends RecorderBase {
 						}
 					}
 					output.flush();
-					onRecordTimeChangeListener.onRecordTimeChange(totalTimeMillis);
 					DoMP3lame lame = new DoMP3lame(1, mSampleRate, 96);
 					lame.toMP3(temp, outPath);
 					DoIOHelper.deleteFile(temp);
+					onRecordListener.onRecordTimeChange(totalTimeMillis);
+					onRecordListener.onFinished();
 				}catch(Exception e){
+					onRecordListener.onError();
 					DoServiceContainer.getLogEngine().writeError("录音失败：startRecord", e);
 					e.printStackTrace();
 				} finally {
@@ -62,8 +65,10 @@ public class do_MP3Recorder extends RecorderBase {
 					if(timer != null){
 						timer.cancel();
 					}
-					mAudioRecord.stop();
-					mAudioRecord.release();
+					if(mAudioRecord != null){
+						mAudioRecord.stop();
+						mAudioRecord.release();
+					}
 				}
 			}
 		};

@@ -25,6 +25,7 @@ public class do_AMRRecorder extends RecorderBase {
 					mediaRecorder.setAudioSamplingRate(sampleRate);
 					mediaRecorder.prepare();
 					mediaRecorder.start();
+					onRecordListener.onStart();
 					long startTimeMillis = System.currentTimeMillis();
 					while (isRecording) {
 						long endTimeMillis = System.currentTimeMillis();
@@ -33,14 +34,16 @@ public class do_AMRRecorder extends RecorderBase {
 							break;
 						}
 					}
-					onRecordTimeChangeListener.onRecordTimeChange(totalTimeMillis);
+					onRecordListener.onRecordTimeChange(totalTimeMillis);
 				}catch(Exception e){
+					onRecordListener.onError();
 					DoServiceContainer.getLogEngine().writeError("AMR录音写入失败：", e);
 					e.printStackTrace();
 				}finally {
 					if (mediaRecorder != null) {
 						mediaRecorder.stop();
 						mediaRecorder.release();
+						onRecordListener.onFinished();
 					}
 					if(timer != null){
 						timer.cancel();

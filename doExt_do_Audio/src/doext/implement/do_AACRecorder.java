@@ -43,6 +43,7 @@ public class do_AACRecorder extends RecorderBase{
 				startTimer(new Timer());
 				try{
 					record.startRecording();
+					onRecordListener.onStart();
 					long startTimeMillis = System.currentTimeMillis();
 					while (isRecording) {
 						long endTimeMillis = System.currentTimeMillis();
@@ -62,8 +63,10 @@ public class do_AACRecorder extends RecorderBase{
 							}
 						}
 					}
-					onRecordTimeChangeListener.onRecordTimeChange(totalTimeMillis);
+					onRecordListener.onRecordTimeChange(totalTimeMillis);
+					onRecordListener.onFinished();
 				}catch(Exception e){
+					onRecordListener.onError();
 					DoServiceContainer.getLogEngine().writeError("录音失败：startRecord", e);
 					e.printStackTrace();
 				}finally{

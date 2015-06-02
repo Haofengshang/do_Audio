@@ -16,7 +16,7 @@ public class RecorderBase implements do_IRecord{
 	private final static int AUDIO_SAMPLE_RATE_LOW = 8000;
 	
 	protected boolean isRecording = true;
-	protected OnRecordTimeChangeListener onRecordTimeChangeListener;
+	protected OnRecordListener onRecordListener;
 	protected long totalTimeMillis;
 	protected Timer timer;
 	
@@ -25,7 +25,7 @@ public class RecorderBase implements do_IRecord{
 		TimerTask task = new TimerTask(){
 			@Override
 			public void run() {
-				onRecordTimeChangeListener.onRecordTimeChange(totalTimeMillis);
+				onRecordListener.onRecordTimeChange(totalTimeMillis);
 			}
 	    };
     	timer.schedule(task, 1000, 1000);
@@ -91,11 +91,7 @@ public class RecorderBase implements do_IRecord{
 		return AUDIO_SAMPLE_RATE_LOW;
 	}
 	
-	@Override
-	public void setOnRecordTimeChangeListener (
-			OnRecordTimeChangeListener onRecordTimeChangeListener) {
-		this.onRecordTimeChangeListener = onRecordTimeChangeListener;
-	}
+	
 
 	@Override
 	public void startRecord(int time, String quality, String outPath) {
@@ -105,6 +101,11 @@ public class RecorderBase implements do_IRecord{
 	@Override
 	public void stopRecord() {
 		isRecording = false;
+	}
+
+	@Override
+	public void setOnRecordListener(OnRecordListener onRecordListener) {
+		this.onRecordListener = onRecordListener;
 	}
 
 }
