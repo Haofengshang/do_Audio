@@ -79,7 +79,7 @@ public class AudioTestActivty extends DoTestActivity{
 
 	@Override
 	protected void onEvent() {
-		DoService.subscribeEvent(this.model, "finished", new DoService.EventCallBack() {
+		DoService.subscribeEvent(this.model, "playFinished", new DoService.EventCallBack() {
 			@Override
 			public void eventCallBack(String _data) {
 				DoServiceContainer.getLogEngine().writeDebug("事件回调：" + _data);

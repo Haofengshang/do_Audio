@@ -32,7 +32,7 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	
 	private MediaPlayer mediaPlayer;
 	private do_IRecord record;
-	private boolean isPlaying;
+	private boolean isStop;
 	private String outPath;
 	private Timer timer;
 	
@@ -133,10 +133,10 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 		}else{
 			mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
 		}
-		isPlaying = true;
+		isStop = false;
 		mediaPlayer.reset();//把各项参数恢复到初始状态
 		mediaPlayer.setDataSource(path);
-        mediaPlayer.prepareAsync();//进行缓冲  
+        mediaPlayer.prepare();//进行缓冲  
         mediaPlayer.setOnPreparedListener(new PreparedListener(position));//注册一个监听器
 	}
 	
@@ -150,7 +150,6 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	public void pause(JSONObject _dictParas, DoIScriptEngine _scriptEngine,
 			DoInvokeResult _invokeResult) throws Exception {
 		if (mediaPlayer != null && mediaPlayer.isPlaying()) {
-			isPlaying = false;
             mediaPlayer.pause();
             _invokeResult.setResultInteger(mediaPlayer.getCurrentPosition());
         }
@@ -167,11 +166,9 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 			DoInvokeResult _invokeResult) throws Exception {
 		if(mediaPlayer != null && !mediaPlayer.isPlaying()) {
             try {
-            	if(isPlaying){
-            		mediaPlayer.prepare();
+            	if(!isStop){
+            		mediaPlayer.start();
             	}
-                mediaPlayer.start();
-                isPlaying = true;
             } catch (Exception e) {
                 e.printStackTrace();  
             }  
@@ -189,6 +186,7 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 			DoInvokeResult _invokeResult) throws Exception {
 		if(mediaPlayer != null && mediaPlayer.isPlaying()) {
             mediaPlayer.stop();
+            isStop = true;
         } 
 	}
 	
