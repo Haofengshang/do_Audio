@@ -31,10 +31,11 @@ import doext.define.do_IRecord;
 public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMethod {
 	
 	private MediaPlayer mediaPlayer;
-	private do_IRecord record;
+	private do_IRecord mRecord;
 	private boolean isStop;
 	private String outPath;
 	private Timer timer;
+	private String currentRecordType;
 	
 	public do_Audio_Model() throws Exception {
 		super();
@@ -203,36 +204,48 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 		String type = DoJsonHelper.getString(_dictParas,"type","mp3");//录音输出格式mp3、amr、aac
 		String quality = DoJsonHelper.getString(_dictParas,"quality","normal");//录音输出质量high、normal、low
 		int limit = DoJsonHelper.getInt(_dictParas,"limit",-1);//录音时长限制
+		if(mRecord != null){
+			if(currentRecordType != null && type.equals(currentRecordType)){
+				return;
+			}
+			mRecord.stopRecord();
+		}
+		do_IRecord currRecord = RecorderFactory.getRecorder(type);
+		if(currRecord == null){
+			DoServiceContainer.getLogEngine().writeError("do_Audio", new RuntimeException("开始录音失败，type：" + type));
+			return;
+		}
 		outPath = path + File.separator + System.currentTimeMillis() + "." + type;
 		String fileFullPath = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), outPath) ;
 		DoIOHelper.createFile(fileFullPath);
-		record = RecorderFactory.getRecorder(type);
-		if(null != record) {
-			record.startRecord(limit, quality, fileFullPath);
-			record.setOnRecordListener(new do_IRecord.OnRecordListener() {
-				@Override
-				public void onStart() {
-					_invokeResult.setResultBoolean(true);
-				}
-				
-				@Override
-				public void onError() {
-					_invokeResult.setResultBoolean(false);
-				}
-				
-				@Override
-				public void onRecordTimeChange(long totalTimeMillis) {
-					DoInvokeResult jsonResult = new DoInvokeResult(getUniqueKey());
-					jsonResult.setResultText(totalTimeMillis + "");
-					getEventCenter().fireEvent("recordProgress", jsonResult);
-				}
-				
-				@Override
-				public void onFinished() {
-					getEventCenter().fireEvent("recordFinished",  new DoInvokeResult(getUniqueKey()));
-				}
-			});
-		}
+		currRecord.startRecord(limit, quality, fileFullPath);
+		currRecord.setOnRecordListener(new do_IRecord.OnRecordListener() {
+			@Override
+			public void onStart() {
+				_invokeResult.setResultBoolean(true);
+			}
+			
+			@Override
+			public void onError() {
+				_invokeResult.setResultBoolean(false);
+				mRecord = null;
+			}
+			
+			@Override
+			public void onRecordTimeChange(long totalTimeMillis) {
+				DoInvokeResult jsonResult = new DoInvokeResult(getUniqueKey());
+				jsonResult.setResultText(totalTimeMillis + "");
+				getEventCenter().fireEvent("recordProgress", jsonResult);
+			}
+			
+			@Override
+			public void onFinished() {
+				getEventCenter().fireEvent("recordFinished",  new DoInvokeResult(getUniqueKey()));
+			}
+		});
+		currentRecordType = type;
+		mRecord = currRecord;
+		
 	}
 	
 	/**
@@ -244,9 +257,10 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	@Override
 	public void stopRecord(JSONObject _dictParas, DoIScriptEngine _scriptEngine,
 			DoInvokeResult _invokeResult) throws Exception {
-		if(null != record){
-			record.stopRecord();
+		if(null != mRecord){
+			mRecord.stopRecord();
 			_invokeResult.setResultText(outPath);
+			mRecord = null;
 		}
 	}
 
@@ -260,8 +274,9 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 		if(timer != null){
 			timer.cancel();
 		}
-		if(record != null){
-			record.stopRecord();
+		if(mRecord != null){
+			mRecord.stopRecord();
+			mRecord = null;
 		}
 	}
 	
