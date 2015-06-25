@@ -39,26 +39,6 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	
 	public do_Audio_Model() throws Exception {
 		super();
-		mediaPlayer =  new MediaPlayer();
-		mediaPlayer.setOnErrorListener(new OnErrorListener() {
-			@Override
-			public boolean onError(MediaPlayer mp, int what, int extra) {
-				getEventCenter().fireEvent("error", new DoInvokeResult(getUniqueKey()));
-				mediaPlayer.release();
-				if(null != timer){
-					timer.cancel();
-				}
-				return false;
-			}
-		});
-		mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
-			@Override
-			public void onCompletion(MediaPlayer mp) {
-				getEventCenter().fireEvent("playFinished", new DoInvokeResult(getUniqueKey()));
-				mediaPlayer.release();
-				timer.cancel();
-			}
-		});
 	}
 	
 	/**
@@ -129,16 +109,34 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 			DoInvokeResult _invokeResult) throws Exception {
 		String path = DoJsonHelper.getString(_dictParas,"path","");
 		int position = DoJsonHelper.getInt(_dictParas,"point", 0);
-		if (null == DoIOHelper.getHttpUrlPath(path)) {
-			path = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), path);
-		}else{
-			mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+		if(mediaPlayer == null ){
+			mediaPlayer =  new MediaPlayer();
+			mediaPlayer.setOnErrorListener(new OnErrorListener() {
+				@Override
+				public boolean onError(MediaPlayer mp, int what, int extra) {
+					getEventCenter().fireEvent("error", new DoInvokeResult(getUniqueKey()));
+					stopPlayer();
+					return false;
+				}
+			});
+			mediaPlayer.setOnCompletionListener(new OnCompletionListener() {
+				@Override
+				public void onCompletion(MediaPlayer mp) {
+					getEventCenter().fireEvent("playFinished", new DoInvokeResult(getUniqueKey()));
+					stopPlayer();
+				}
+			});
+			if (null == DoIOHelper.getHttpUrlPath(path)) {
+				path = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), path);
+			}else{
+				mediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+			}
+			isStop = false;
+			mediaPlayer.reset();//把各项参数恢复到初始状态
+			mediaPlayer.setDataSource(path);
+	        mediaPlayer.prepare();//进行缓冲  
+	        mediaPlayer.setOnPreparedListener(new PreparedListener(position));//注册一个监听器
 		}
-		isStop = false;
-		mediaPlayer.reset();//把各项参数恢复到初始状态
-		mediaPlayer.setDataSource(path);
-        mediaPlayer.prepare();//进行缓冲  
-        mediaPlayer.setOnPreparedListener(new PreparedListener(position));//注册一个监听器
 	}
 	
 	/**
@@ -186,9 +184,20 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	public void stop(JSONObject _dictParas, DoIScriptEngine _scriptEngine,
 			DoInvokeResult _invokeResult) throws Exception {
 		if(mediaPlayer != null && mediaPlayer.isPlaying()) {
+			isStop = true;
             mediaPlayer.stop();
-            isStop = true;
+            stopPlayer();
         } 
+	}
+	
+	//释放
+	private void stopPlayer(){
+		mediaPlayer.release();
+		mediaPlayer = null;
+		if(null != timer){
+			timer.cancel();
+			timer = null;
+		}
 	}
 	
 	/**
@@ -267,17 +276,6 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 	@Override
 	public void dispose() {
 		super.dispose();
-		if(mediaPlayer != null){  
-            mediaPlayer.stop();  
-            mediaPlayer.release();
-        }
-		if(timer != null){
-			timer.cancel();
-		}
-		if(mRecord != null){
-			mRecord.stopRecord();
-			mRecord = null;
-		}
 	}
 	
 	private final class PreparedListener implements OnPreparedListener {
@@ -305,7 +303,7 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 			@Override
 			public void run() {
 				try {
-					if(mediaPlayer.isPlaying()){
+					if(mediaPlayer != null && mediaPlayer.isPlaying()){
 						DoInvokeResult jsonResult = new DoInvokeResult(getUniqueKey());
 						JSONObject json = new JSONObject();
 						json.put("currentTime", mediaPlayer.getCurrentPosition());

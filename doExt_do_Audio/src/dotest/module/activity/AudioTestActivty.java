@@ -25,7 +25,7 @@ public class AudioTestActivty extends DoTestActivity{
 	public void doplay(View view) {
 		Map<String, String> _paras_back = new HashMap<String, String>();
 		//http://staff2.ustc.edu.cn/~wdw/softdown/index.asp/0042515_05.ANDY.mp3
-		_paras_back.put("path", "data://1433232858626.amr");
+		_paras_back.put("path", "data://bb.mp3");
 		_paras_back.put("point", "0");
         DoService.syncMethod(this.model, "play", _paras_back);
 	}
