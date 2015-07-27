@@ -34,7 +34,6 @@ public class do_AMRRecorder extends RecorderBase implements Runnable{
 					stopRecord();
 				}
 			}
-			onRecordListener.onRecordTimeChange(totalTimeMillis);
 		}catch(Exception e){
 			stopRecord();
 			onRecordListener.onError();

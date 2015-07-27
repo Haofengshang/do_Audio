@@ -50,7 +50,6 @@ public class do_AACRecorder extends RecorderBase implements Runnable{
 					}
 				}
 			}
-			onRecordListener.onRecordTimeChange(totalTimeMillis);
 			onRecordListener.onFinished();
 		}catch(Exception e){
 			onRecordListener.onError();

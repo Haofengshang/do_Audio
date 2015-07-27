@@ -49,7 +49,6 @@ public class do_MP3Recorder extends RecorderBase implements Runnable{
 			DoMP3lame lame = new DoMP3lame(1, mSampleRate, 96);
 			lame.toMP3(temp, outPath);
 			DoIOHelper.deleteFile(temp);
-			onRecordListener.onRecordTimeChange(totalTimeMillis);
 			onRecordListener.onFinished();
 		}catch(Exception e){
 			stopRecord();
