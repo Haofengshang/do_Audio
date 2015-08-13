@@ -1,6 +1,7 @@
 package doext.app;
 import android.content.Context;
 import core.interfaces.DoIAppDelegate;
+import core.interfaces.DoIModuleTypeID;
 
 /**
  * APP启动的时候会执行onCreate方法；
@@ -28,5 +29,10 @@ public class do_Audio_App implements DoIAppDelegate {
 	
 	public String getModuleTypeID() {
 		return "do_Audio";
+	}
+
+	@Override
+	public String getTypeID() {
+		return getModuleTypeID();
 	}
 }
