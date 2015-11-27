@@ -224,7 +224,12 @@ public class do_Audio_Model extends DoSingletonModule implements do_Audio_IMetho
 			DoServiceContainer.getLogEngine().writeError("do_Audio", new RuntimeException("开始录音失败，type：" + type));
 			return;
 		}
-		outPath = path + File.separator + System.currentTimeMillis() + "." + type;
+		String recordName = System.currentTimeMillis() + "." + type;
+		if(path.equals("data://") || path.endsWith("/")) {
+			outPath = path + recordName;
+		} else {
+			outPath = path + File.separator + recordName; 
+		}
 		String fileFullPath = DoIOHelper.getLocalFileFullPath(_scriptEngine.getCurrentApp(), outPath) ;
 		DoIOHelper.createFile(fileFullPath);
 		currRecord.startRecord(limit, quality, fileFullPath);
